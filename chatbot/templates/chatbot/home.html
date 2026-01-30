@@ -1,0 +1,296 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vitas AI -Ayushya</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-content">
+                <div class="logo">
+                    <i class="fas fa-heartbeat"></i>
+                    <span>Vitas AI - Ayushya</span>
+                </div>
+                <ul class="nav-links">
+                    <li><a href="#home">Home</a></li>
+                    <li><a href="#about">About</a></li>
+                    <li><a href="#features">Features</a></li>
+                    <li><a href="#how-to-use">How to Use</a></li>
+                    <li><a href="#contact">Contact</a></li>
+                </ul>
+                <div class="auth-buttons">
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'chat' %}" class="btn btn-primary">Dashboard</a>
+                        <a href="{% url 'account_logout' %}" class="btn btn-outline">Logout</a>
+                    {% else %}
+                        <a href="{% url 'account_login' %}" class="btn btn-outline">Login</a>
+                        <a href="{% url 'account_signup' %}" class="btn btn-primary">Sign Up</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="home" class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <div class="hero-text">
+                    <h1 class="hero-title">Your Intelligent Medical Health Assistant</h1>
+                    <p class="hero-subtitle">Get personalized health guidance with our AI-powered chatbot supporting both Modern Medicine and Ayurvedic approaches</p>
+                    <div class="hero-buttons">
+                        {% if user.is_authenticated %}
+                            <a href="{% url 'chat' %}" class="btn btn-primary btn-lg">
+                                <i class="fas fa-comments"></i> Start Chatting
+                            </a>
+                        {% else %}
+                            <a href="{% url 'account_signup' %}" class="btn btn-primary btn-lg">
+                                <i class="fas fa-rocket"></i> Try Now
+                            </a>
+                        {% endif %}
+                        <a href="#features" class="btn btn-outline btn-lg">
+                            <i class="fas fa-info-circle"></i> Learn More
+                        </a>
+                    </div>
+                </div>
+                <div class="hero-image">
+                    <div class="floating-card">
+                        <i class="fas fa-user-md"></i>
+                        <h3>24/7 Available</h3>
+                        <p>Always here for you</p>
+                    </div>
+                    <div class="floating-card">
+                        <i class="fas fa-shield-alt"></i>
+                        <h3>Secure & Private</h3>
+                        <p>Your data is safe</p>
+                    </div>
+                    <div class="floating-card">
+                        <i class="fas fa-brain"></i>
+                        <h3>AI Powered</h3>
+                        <p>Smart responses</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="about">
+        <div class="container">
+            <div class="section-header">
+                <h2>About Vitas AI</h2>
+                <p>Your trusted companion for health and wellness</p>
+            </div>
+            <div class="about-content">
+                <div class="about-card">
+                    <i class="fas fa-stethoscope"></i>
+                    <h3>Modern Medicine</h3>
+                    <p>Get evidence-based medical advice powered by the latest research and clinical guidelines.</p>
+                </div>
+                <div class="about-card">
+                    <i class="fas fa-leaf"></i>
+                    <h3>Ayurvedic Wisdom</h3>
+                    <p>Discover holistic healing through traditional Ayurvedic principles and natural remedies.</p>
+                </div>
+                <div class="about-card">
+                    <i class="fas fa-exchange-alt"></i>
+                    <h3>Dual Approach</h3>
+                    <p>Switch seamlessly between medicinal and ayurvedic models based on your preference.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="features">
+        <div class="container">
+            <div class="section-header">
+                <h2>Powerful Features</h2>
+                <p>Everything you need for comprehensive health guidance</p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <h3>AI-Powered Chat</h3>
+                    <p>Intelligent responses to your health queries using advanced AI technology</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-file-upload"></i>
+                    </div>
+                    <h3>Document Upload</h3>
+                    <p>Upload medical reports, prescriptions, and images for detailed analysis</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-history"></i>
+                    </div>
+                    <h3>Chat History</h3>
+                    <p>Access your previous conversations anytime for continued care</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-sync-alt"></i>
+                    </div>
+                    <h3>Model Switching</h3>
+                    <p>Toggle between Medicinal and Ayurvedic approaches instantly</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-lock"></i>
+                    </div>
+                    <h3>Privacy First</h3>
+                    <p>Your health information is encrypted and completely confidential</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-mobile-alt"></i>
+                    </div>
+                    <h3>Responsive Design</h3>
+                    <p>Access from any device - desktop, tablet, or mobile</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How to Use Section -->
+    <section id="how-to-use" class="how-to-use">
+        <div class="container">
+            <div class="section-header">
+                <h2>How to Use Vitas AI</h2>
+                <p>Get started in just 3 simple steps</p>
+            </div>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h3>Sign Up</h3>
+                        <p>Create your free account using email or Google authentication in seconds</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h3>Choose Your Model</h3>
+                        <p>Select between Medicinal or Ayurvedic approach based on your preference</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h3>Start Chatting</h3>
+                        <p>Ask your health questions and get instant, personalized responses</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="contact">
+        <div class="container">
+            <div class="section-header">
+                <h2>Contact Us</h2>
+                <p>Have questions? We're here to help!</p>
+            </div>
+            <div class="contact-content">
+                <div class="contact-info">
+                    <div class="contact-item">
+                        <i class="fas fa-envelope"></i>
+                        <h3>Email</h3>
+                        <p>neelpatel0695@gmail.com</p>
+                    </div>
+                    <div class="contact-item">
+                        <i class="fas fa-phone"></i>
+                        <h3>Phone</h3>
+                        <p>+91 9076471306</p>
+                    </div>
+                    <div class="contact-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <h3>Address</h3>
+                        <p>Mumbai , India</p>
+                    </div>
+                </div>
+                <div class="contact-form-container">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }}">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    <form method="POST" class="contact-form">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            {{ contact_form.name }}
+                        </div>
+                        <div class="form-group">
+                            {{ contact_form.email }}
+                        </div>
+                        <div class="form-group">
+                            {{ contact_form.subject }}
+                        </div>
+                        <div class="form-group">
+                            {{ contact_form.message }}
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-paper-plane"></i> Send Message
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3><i class="fas fa-heartbeat"></i> Vitas AI - Ayushya</h3>
+                    <p>Your intelligent medical health assistant providing personalized guidance 24/7.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="#about">About Us</a></li>
+                        <li><a href="#features">Features</a></li>
+                        <li><a href="#how-to-use">How to Use</a></li>
+                        <li><a href="#contact">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Legal</h4>
+                    <ul>
+                        <li><a href="#">Privacy Policy</a></li>
+                        <li><a href="#">Terms of Service</a></li>
+                        <li><a href="#">Disclaimer</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Follow Us</h4>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-facebook"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-linkedin"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 Vitas AI - Ayushya. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="{% static 'js/script.js' %}"></script>
+</body>
+</html>

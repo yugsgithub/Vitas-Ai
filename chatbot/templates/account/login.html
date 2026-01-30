@@ -1,0 +1,99 @@
+{% load static %}
+{% load socialaccount %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Vitas AI</title>
+   <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="auth-body">
+    <div class="auth-container">
+        <div class="auth-box">
+            <div class="auth-header">
+                <div class="logo">
+                    <i class="fas fa-heartbeat"></i>
+                    <span>Vitas AI</span>
+                </div>
+                <h2>Welcome Back!</h2>
+                <p>Login to continue your health journey</p>
+            </div>
+
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            {% if form.errors %}
+                <div class="alert alert-error">
+                    Please correct the errors below.
+                </div>
+            {% endif %}
+
+            <form method="POST" action="{% url 'account_login' %}" class="auth-form">
+                {% csrf_token %}
+                
+                <div class="form-group">
+                    <label for="id_login">
+                        <i class="fas fa-envelope"></i> Email or Username
+                    </label>
+                    {{ form.login }}
+                </div>
+
+                <div class="form-group">
+                    <label for="id_password">
+                        <i class="fas fa-lock"></i> Password
+                    </label>
+                    {{ form.password }}
+                </div>
+
+                <div class="form-options">
+                    <label class="checkbox-label">
+                        {{ form.remember }} Remember me
+                    </label>
+                    <a href="{% url 'account_reset_password' %}" class="forgot-link">Forgot Password?</a>
+                </div>
+
+                {% if redirect_field_value %}
+                    <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
+                {% endif %}
+
+                <button type="submit" class="btn btn-primary btn-block">
+                    <i class="fas fa-sign-in-alt"></i> Login
+                </button>
+            </form>
+
+            <div class="divider">
+                <span>OR</span>
+            </div>
+
+            <div class="social-auth">
+                {% comment %}
+                <a href="{% provider_login_url 'google' %}" class="btn btn-google btn-block">
+                    <i class="fab fa-google"></i> Continue with Google
+                </a>
+                {% endcomment %}
+                <p style="text-align: center; color: var(--gray); font-size: 0.9rem;">
+                    <i class="fas fa-info-circle"></i> Google login temporarily disabled
+                </p>
+            </div>
+
+            <div class="auth-footer">
+                <p>Don't have an account? <a href="{% url 'account_signup' %}">Sign Up</a></p>
+                <p><a href="{% url 'home' %}">← Back to Home</a></p>
+            </div>
+        </div>
+
+        <div class="auth-illustration">
+            <i class="fas fa-user-md"></i>
+            <h3>Your Health, Our Priority</h3>
+            <p>Join thousands of users getting personalized health guidance</p>
+        </div>
+    </div>
+</body>
+</html>

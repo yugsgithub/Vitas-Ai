@@ -1,0 +1,45 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block head_title %}Vitas AI{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="auth-body">
+    <div class="auth-container">
+        <div class="auth-box">
+            <div class="auth-header">
+                <div class="logo">
+                    <i class="fas fa-heartbeat"></i>
+                    <span>Vitas AI</span>
+                </div>
+                <h2>{% block title %}Vitas AI{% endblock %}</h2>
+            </div>
+
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            {% block content %}
+            {% endblock %}
+
+            <div class="auth-footer">
+                <p><a href="{% url 'home' %}">← Back to Home</a></p>
+            </div>
+        </div>
+
+        <div class="auth-illustration">
+            <i class="fas fa-heartbeat"></i>
+            <h3>Your Health, Our Priority</h3>
+            <p>Secure account management for Vitas AI</p>
+        </div>
+    </div>
+</body>
+</html>

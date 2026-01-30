@@ -1,0 +1,125 @@
+{% load static %}
+{% load socialaccount %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - Vitas AI</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="auth-body">
+    <div class="auth-container">
+        <div class="auth-box">
+            <div class="auth-header">
+                <div class="logo">
+                    <i class="fas fa-heartbeat"></i>
+                    <span>Vitas AI</span>
+                </div>
+                <h2>Create Your Account</h2>
+                <p>Start your personalized health journey today</p>
+            </div>
+
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            {% if form.errors %}
+                <div class="alert alert-error">
+                    {% for field, errors in form.errors.items %}
+                        {% for error in errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <form method="POST" action="{% url 'account_signup' %}" class="auth-form">
+                {% csrf_token %}
+                
+                <div class="form-group">
+                    <label for="id_username">
+                        <i class="fas fa-user"></i> Username
+                    </label>
+                    {{ form.username }}
+                </div>
+
+                <div class="form-group">
+                    <label for="id_email">
+                        <i class="fas fa-envelope"></i> Email
+                    </label>
+                    {{ form.email }}
+                </div>
+
+                <div class="form-group">
+                    <label for="id_password1">
+                        <i class="fas fa-lock"></i> Password
+                    </label>
+                    {{ form.password1 }}
+                    <small class="form-text">Must be at least 8 characters</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="id_password2">
+                        <i class="fas fa-lock"></i> Confirm Password
+                    </label>
+                    {{ form.password2 }}
+                </div>
+
+                {% if redirect_field_value %}
+                    <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
+                {% endif %}
+
+                <button type="submit" class="btn btn-primary btn-block">
+                    <i class="fas fa-user-plus"></i> Create Account
+                </button>
+            </form>
+
+            <div class="divider">
+                <span>OR</span>
+            </div>
+
+            <div class="social-auth">
+                {% comment %}
+                <a href="{% provider_login_url 'google' %}" class="btn btn-google btn-block">
+                    <i class="fab fa-google"></i> Sign up with Google
+                </a>
+                {% endcomment %}
+                <p style="text-align: center; color: var(--gray); font-size: 0.9rem;">
+                    <i class="fas fa-info-circle"></i> Google signup temporarily disabled
+                </p>
+            </div>
+
+            <div class="auth-footer">
+                <p>Already have an account? <a href="{% url 'account_login' %}">Login</a></p>
+                <p><a href="{% url 'home' %}">← Back to Home</a></p>
+            </div>
+        </div>
+
+        <div class="auth-illustration">
+            <i class="fas fa-heartbeat"></i>
+            <h3>Start Your Wellness Journey</h3>
+            <p>Get instant access to AI-powered health guidance</p>
+            <div class="features-list">
+                <div class="feature-item">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Personalized Health Advice</span>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Medicinal & Ayurvedic Options</span>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-check-circle"></i>
+                    <span>24/7 Available Support</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

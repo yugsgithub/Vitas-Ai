@@ -1,0 +1,425 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat - Vitas AI</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="chat-body">
+    <div class="chat-container">
+        <!-- SIDEBAR -->
+        <aside class="chat-sidebar">
+            <!-- Logo -->
+            <div class="sidebar-logo">
+                <i class="fas fa-heartbeat"></i>
+                <span>Vitas AI</span>
+            </div>
+
+            <!-- New Chat Button -->
+            <div class="sidebar-new-chat">
+                <button type="button" class="btn-new-chat" id="newChatBtn">
+                    <i class="fas fa-plus"></i> New Chat
+                </button>
+            </div>
+
+            <!-- Chat History -->
+            <div class="chat-history">
+                <h3>CHAT HISTORY</h3>
+                <div class="history-list">
+                    {% if conversations %}
+                        {% for conversation in conversations %}
+                        <a href="{% url 'chat_conversation' conversation.id %}" 
+                           class="history-item {% if current_conversation.id == conversation.id %}active{% endif %}">
+                            <div class="history-item-content">
+                                <i class="fas fa-comment-medical"></i>
+                                <span>{{ conversation.title|truncatechars:20 }}</span>
+                                <span class="model-badge {% if conversation.model_type == 'medicinal' %}medicinal{% else %}ayurvedic{% endif %}">
+                                    {% if conversation.model_type == 'medicinal' %}💊{% else %}🌿{% endif %}
+                                </span>
+                            </div>
+                            <div class="history-item-date">{{ conversation.created_at|date:"M d, Y" }}</div>
+                        </a>
+                        {% endfor %}
+                    {% else %}
+                        <div class="no-history">
+                            <i class="fas fa-inbox"></i>
+                            <p>No chat history yet</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- User & Logout -->
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <i class="fas fa-user-circle"></i>
+                    <span>{{ user.first_name|default:user.username }}</span>
+                </div>
+                <form method="post" action="{% url 'account_logout' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-logout" onclick="return confirm('Are you sure you want to logout?')">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </button>
+                </form>
+            </div>
+        </aside>
+
+        <!-- MAIN CHAT -->
+        <main class="chat-main">
+            <!-- Header -->
+            <div class="chat-header">
+                <div class="chat-title">
+                    <h2 id="chatTitle">{{ current_conversation.title|default:"New Chat" }}</h2>
+                    <span class="model-indicator" id="currentModel">
+                        {% if current_conversation.model_type == 'medicinal' %}
+                            <i class="fas fa-pills"></i> Medicinal Model
+                        {% else %}
+                            <i class="fas fa-leaf"></i> Ayurvedic Model
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="chat-controls">
+                    <button class="model-switch-btn" id="modelSwitch">
+                        <i class="fas fa-exchange-alt"></i>
+                        <span id="switchText">
+                            Switch to {% if current_conversation.model_type == 'medicinal' %}Ayurvedic{% else %}Medicinal{% endif %}
+                        </span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Messages -->
+            <div class="messages-container" id="messagesContainer">
+                {% if messages %}
+                    {% for msg in messages %}
+                    <div class="message {{ msg.role }}">
+                        <div class="message-avatar">
+                            {% if msg.role == 'user' %}
+                                <i class="fas fa-user"></i>
+                            {% else %}
+                                <i class="fas fa-robot"></i>
+                            {% endif %}
+                        </div>
+                        <div class="message-content">
+                            <div class="message-header">
+                                <span class="message-sender">{% if msg.role == 'user' %}You{% else %}Vitas AI{% endif %}</span>
+                                <span class="message-time">{{ msg.timestamp|date:"h:i A" }}</span>
+                            </div>
+                            <div class="message-text">{{ msg.content|linebreaks }}</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="welcome-message" id="welcomeMessage">
+                        <i class="fas fa-heartbeat"></i>
+                        <h2>Welcome to Vitas AI!</h2>
+                        <p>How can I assist you with your health today?</p>
+                        <div class="suggestions">
+                            <button class="suggestion-btn" onclick="sendSuggestion('What are the symptoms of diabetes?')">
+                                What are the symptoms of diabetes?
+                            </button>
+                            <button class="suggestion-btn" onclick="sendSuggestion('Natural remedies for headache')">
+                                Natural remedies for headache
+                            </button>
+                            <button class="suggestion-btn" onclick="sendSuggestion('How to improve immunity?')">
+                                How to improve immunity?
+                            </button>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Input -->
+            <div class="chat-input-area">
+                <form id="chatForm">
+                    <div class="input-wrapper">
+                        <button type="button" class="attach-btn" id="attachBtn">
+                            <i class="fas fa-paperclip"></i>
+                        </button>
+                        <input type="file" id="fileInput" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" style="display: none;">
+                        <textarea id="messageInput" placeholder="Type your message here..." rows="1" maxlength="5000"></textarea>
+                        <button type="submit" class="send-btn" id="sendBtn">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                    <div class="input-info">
+                        <span id="fileInfo" class="file-info"></span>
+                        <span class="char-count"><span id="charCount">0</span>/5000</span>
+                    </div>
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        let conversationId = {% if current_conversation.id %}{{ current_conversation.id }}{% else %}null{% endif %};
+        let currentModelType = '{{ current_conversation.model_type|default:"medicinal" }}';
+        let isNewChat = {% if not messages %}true{% else %}false{% endif %};
+        
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        const csrftoken = getCookie('csrftoken');
+
+        // NEW CHAT BUTTON - Clear conversation and show welcome
+        document.getElementById('newChatBtn').addEventListener('click', function() {
+            // Clear the messages
+            const messagesContainer = document.getElementById('messagesContainer');
+            messagesContainer.innerHTML = `
+                <div class="welcome-message" id="welcomeMessage">
+                    <i class="fas fa-heartbeat"></i>
+                    <h2>Welcome to Vitas AI!</h2>
+                    <p>How can I assist you with your health today?</p>
+                    <div class="suggestions">
+                        <button class="suggestion-btn" onclick="sendSuggestion('What are the symptoms of diabetes?')">
+                            What are the symptoms of diabetes?
+                        </button>
+                        <button class="suggestion-btn" onclick="sendSuggestion('Natural remedies for headache')">
+                            Natural remedies for headache
+                        </button>
+                        <button class="suggestion-btn" onclick="sendSuggestion('How to improve immunity?')">
+                            How to improve immunity?
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            // Reset conversation ID
+            conversationId = null;
+            isNewChat = true;
+            
+            // Update title
+            document.getElementById('chatTitle').textContent = 'New Chat';
+            
+            // Clear input
+            document.getElementById('messageInput').value = '';
+            document.getElementById('charCount').textContent = '0';
+            
+            // Remove active class from all history items
+            document.querySelectorAll('.history-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // Focus on input
+            document.getElementById('messageInput').focus();
+        });
+
+        const messageInput = document.getElementById('messageInput');
+        messageInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+            document.getElementById('charCount').textContent = this.value.length;
+        });
+
+        document.getElementById('chatForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const message = messageInput.value.trim();
+            if (!message) return;
+
+            messageInput.disabled = true;
+            document.getElementById('sendBtn').disabled = true;
+            addMessageToUI('user', message);
+            messageInput.value = '';
+            messageInput.style.height = 'auto';
+            document.getElementById('charCount').textContent = '0';
+
+            try {
+                const requestBody = {
+                    message: message,
+                    model_type: currentModelType
+                };
+                
+                // Only add conversation_id if it exists
+                if (conversationId) {
+                    requestBody.conversation_id = conversationId;
+                }
+                
+                const response = await fetch('/chat/send/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+
+                const data = await response.json();
+                if (data.status === 'success') {
+                    // If this was a new chat, save the conversation ID
+                    if (isNewChat || !conversationId) {
+                        if (data.conversation_id) {
+                            conversationId = data.conversation_id;
+                            isNewChat = false;
+                            
+                            // Update URL without reload
+                            window.history.pushState({}, '', '/chat/' + conversationId + '/');
+                            
+                            // Update title if provided
+                            if (data.conversation_title) {
+                                document.getElementById('chatTitle').textContent = data.conversation_title;
+                            }
+                        }
+                    }
+                    
+                    addMessageToUI('assistant', data.assistant_message.content);
+                } else {
+                    alert('Error: ' + (data.message || 'Failed to send message'));
+                    console.error('Server error:', data);
+                }
+            } catch (error) {
+                alert('Error sending message. Please try again.');
+                console.error('Send error:', error);
+            }
+
+            messageInput.disabled = false;
+            document.getElementById('sendBtn').disabled = false;
+            messageInput.focus();
+        });
+
+        function addMessageToUI(role, content) {
+            const messagesContainer = document.getElementById('messagesContainer');
+            const welcomeMsg = document.querySelector('.welcome-message');
+            if (welcomeMsg) welcomeMsg.remove();
+
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${role}`;
+            const time = new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+            
+            messageDiv.innerHTML = `
+                <div class="message-avatar">
+                    <i class="fas fa-${role === 'user' ? 'user' : 'robot'}"></i>
+                </div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="message-sender">${role === 'user' ? 'You' : 'Vitas AI'}</span>
+                        <span class="message-time">${time}</span>
+                    </div>
+                    <div class="message-text">${content.replace(/\n/g, '<br>')}</div>
+                </div>
+            `;
+            
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function sendSuggestion(text) {
+            messageInput.value = text;
+            document.getElementById('chatForm').dispatchEvent(new Event('submit'));
+        }
+
+        document.getElementById('attachBtn').addEventListener('click', function() {
+            document.getElementById('fileInput').click();
+        });
+
+        document.getElementById('fileInput').addEventListener('change', async function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            document.getElementById('fileInfo').textContent = `Uploading: ${file.name}`;
+            const formData = new FormData();
+            formData.append('file', file);
+            if (conversationId) {
+                formData.append('conversation_id', conversationId);
+            }
+
+            try {
+                const response = await fetch('/chat/upload/', {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': csrftoken },
+                    body: formData
+                });
+
+                const data = await response.json();
+                if (data.status === 'success') {
+                    document.getElementById('fileInfo').textContent = `✓ ${data.file_name}`;
+                    addMessageToUI('assistant', `File uploaded successfully.`);
+                    setTimeout(() => {
+                        document.getElementById('fileInfo').textContent = '';
+                    }, 5000);
+                }
+            } catch (error) {
+                document.getElementById('fileInfo').textContent = '✗ Failed';
+            }
+            e.target.value = '';
+        });
+
+        document.getElementById('modelSwitch').addEventListener('click', async function() {
+            const newModel = currentModelType === 'medicinal' ? 'ayurvedic' : 'medicinal';
+            
+            // If no conversation yet, just update the UI
+            if (!conversationId) {
+                currentModelType = newModel;
+                updateModelUI(newModel);
+                return;
+            }
+            
+            try {
+                const response = await fetch('/chat/switch-model/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken
+                    },
+                    body: JSON.stringify({
+                        conversation_id: conversationId,
+                        model_type: newModel
+                    })
+                });
+
+                const data = await response.json();
+                if (data.status === 'success') {
+                    currentModelType = newModel;
+                    updateModelUI(newModel);
+                } else {
+                    console.error('Model switch error:', data.message);
+                }
+            } catch (error) {
+                console.error('Model switch failed:', error);
+                // Still update UI even if backend fails
+                currentModelType = newModel;
+                updateModelUI(newModel);
+            }
+        });
+
+        function updateModelUI(modelType) {
+            const currentModel = document.getElementById('currentModel');
+            const switchText = document.getElementById('switchText');
+            
+            if (modelType === 'medicinal') {
+                currentModel.innerHTML = '<i class="fas fa-pills"></i> Medicinal Model';
+                switchText.textContent = 'Switch to Ayurvedic';
+            } else {
+                currentModel.innerHTML = '<i class="fas fa-leaf"></i> Ayurvedic Model';
+                switchText.textContent = 'Switch to Medicinal';
+            }
+        }
+
+        messageInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                document.getElementById('chatForm').dispatchEvent(new Event('submit'));
+            }
+        });
+
+        window.addEventListener('load', function() {
+            const container = document.getElementById('messagesContainer');
+            container.scrollTop = container.scrollHeight;
+            messageInput.focus();
+        });
+    </script>
+</body>
+</html>
