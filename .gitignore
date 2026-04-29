@@ -1,4 +1,4 @@
-# Django
+# ── Django ──────────────────────────────────────
 *.log
 local_settings.py
 db.sqlite3
@@ -6,10 +6,11 @@ db.sqlite3-journal
 media/
 staticfiles/
 
-# Environment variables
+# ── Environment variables ────────────────────────
 .env
+.env.*
 
-# Python
+# ── Python ───────────────────────────────────────
 __pycache__/
 *.py[cod]
 *$py.class
@@ -21,15 +22,32 @@ ENV/
 env.bak/
 venv.bak/
 
-# IDEs
+# ── IDEs ─────────────────────────────────────────
 .vscode/
 .idea/
+.claude/
 
-# Debug scripts
-check_env.py
-python debug_django_env.py
-debug_django_env.py
-
-# OS
+# ── OS ───────────────────────────────────────────
 .DS_Store
 Thumbs.db
+
+# ── Debug / one-off scripts ───────────────────────
+check_env.py
+debug_django_env.py
+python debug_django_env.py
+verify_install.py
+
+# ── ML Model weights (upload to HuggingFace instead) ──
+ayurveda_lora_model/
+outputs/
+0.0.0/
+
+# ── Large datasets (too big for GitHub) ──────────
+*.jsonl
+*.csv
+*.json
+merged_ayurveda_dataset/
+ayurveda_dataset.toon.json
+
+# ── Evaluation results (generated artifacts) ─────
+eval_results/
