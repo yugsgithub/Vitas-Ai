@@ -34,7 +34,7 @@ Thumbs.db
 # ── Debug / one-off scripts ───────────────────────
 check_env.py
 debug_django_env.py
-python debug_django_env.py
+"python debug_django_env.py"
 verify_install.py
 
 # ── ML Model weights (upload to HuggingFace instead) ──
@@ -51,3 +51,24 @@ ayurveda_dataset.toon.json
 
 # ── Evaluation results (generated artifacts) ─────
 eval_results/
+
+# ── RAG Storage ──────────────────────────────────
+rag_storage/
+
+# ── Personal / Academic folders ──────────────────
+CP CHAITU SEXY MAN/
+B.Tech_Report_Format_Latex/
+
+# ── Generated / scratch files ────────────────────
+poster_render.html
+save_poster.html
+render_poster.js
+generate_poster.py
+scratch_test.py
+fix_history.py
+create_test_file.py
+dashboard_copy.png
+SAKEC_logo_copy.png
+Copy of Template_poster.pptx.pdf
+data.py
+merge_datasets.py

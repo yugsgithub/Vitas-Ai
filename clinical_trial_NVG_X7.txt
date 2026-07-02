@@ -1,0 +1,47 @@
+AYURVEDIC CLINICAL TRIAL REPORT: EFFICACY OF NOVEL COMPOUND "NEURO-VATA-GHRITA-X7"
+================================================================================
+
+Date: October 14, 2026
+Principal Investigator: Dr. Anjali Sharma, MD (Ayu), PhD
+Institution: Institute of Advanced Ayurvedic Neuroscience
+Trial ID: IAAN-NVG-2026-004
+
+1. BACKGROUND AND OBJECTIVE
+---------------------------
+This clinical trial evaluates a novel proprietary formulation, Neuro-Vata-Ghrita-X7 (NVG-X7), in the management of severe Vata-induced peripheral neuropathy (Snayu-Vata) complicated by secondary Pitta involvement. Conventional treatments often fail to provide complete symptomatic relief without significant side effects. The objective of this trial was to determine if NVG-X7 could restore nerve conduction velocity and reduce neuropathic pain scores.
+
+2. COMPOSITION OF NVG-X7
+------------------------
+Neuro-Vata-Ghrita-X7 is a complex, multi-herb medicated ghee prepared using the traditional Murchana process. The specific ingredients and their unique exact proportions are:
+- Ashwagandha (Withania somnifera) root extract: 12.5%
+- Bala (Sida cordifolia) whole plant: 10.2%
+- Guduchi (Tinospora cordifolia) stem: 8.4%
+- Shunthi (Zingiber officinale) rhizome: 3.1%
+- Ativisha (Aconitum heterophyllum) purified root: 1.8%
+- A2 Cow Ghee (Go-Ghrita) sourced strictly from the Gir breed: 64.0%
+
+3. UNIQUE PREPARATION METHOD (Samskara)
+---------------------------------------
+Unlike standard ghritas, NVG-X7 is subjected to a proprietary 7-day continuous heating cycle (Saptaha-Paka). The temperature is strictly maintained between 42°C and 45°C. On the 4th day of heating, 50 ml of fresh Aloe Vera (Kumari) juice is added precisely at sunset (Sandhya-kala) to pacify the secondary Pitta provocation. This specific timing is critical; previous batches where Kumari was added at noon showed a 40% reduction in efficacy.
+
+4. DOSAGE AND ADMINISTRATION (Matra and Anupana)
+------------------------------------------------
+The trial established a highly specific dosage regimen:
+- Initial Loading Phase (Days 1-7): 15 ml twice daily.
+- Maintenance Phase (Days 8-90): 7.5 ml once daily, specifically in the late afternoon (between 3:00 PM and 5:00 PM), which aligns with the Vata kala (time of Vata dominance).
+- Mandatory Anupana (Vehicle): The ghee must be consumed with exactly 100 ml of lukewarm goat's milk (Aja Dugdha) mixed with a pinch of Pippali (Long Pepper) powder. Using cow's milk or water neutralizes the active alkaloid complexes in Ativisha.
+
+5. CLINICAL FINDINGS AND EFFICACY
+---------------------------------
+In a cohort of 120 patients (60 test, 60 placebo):
+- 87% of the test group reported a cessation of "burning and tingling" (Daha and Harsha) within the first 14 days.
+- Nerve Conduction Velocity (NCV) studies showed a statistically significant improvement of 22% in the sural nerve.
+- Side effects: Three patients reported mild gastrointestinal distress, which was immediately resolved by reducing the Pippali in the Anupana from a "pinch" to "half a pinch".
+
+6. STRICT CONTRAINDICATIONS
+---------------------------
+NVG-X7 must NEVER be administered to patients exhibiting symptoms of severe Kapha blockages (Avarana), specifically those with a BMI over 35 coupled with chronic sinusitis. In such cases, the heavy (Guru) nature of the ghee exacerbates the obstruction, leading to profound lethargy and increased pain.
+
+7. CONCLUSION
+-------------
+NVG-X7 represents a breakthrough in integrating classical Ayurvedic pharmaceutics with targeted neurological action. Its success depends entirely on adherence to the strict preparation temperature (42-45°C) and the specific goat's milk anupana.

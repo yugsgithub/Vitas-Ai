@@ -167,11 +167,15 @@ TEMPLATES = [
 WSGI_APPLICATION = 'vitas_project.wsgi.application'
 
 
-# Database
+# Database — PostgreSQL
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.environ.get('DB_NAME', 'vitas_db'),
+        'USER': os.environ.get('DB_USER', 'vitas_user'),
+        'PASSWORD': os.environ.get('DB_PASSWORD', 'vitas_secure_2024'),
+        'HOST': os.environ.get('DB_HOST', 'localhost'),
+        'PORT': os.environ.get('DB_PORT', '5432'),
     }
 }
 

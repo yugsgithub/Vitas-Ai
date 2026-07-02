@@ -9,13 +9,31 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.core.files.storage import FileSystemStorage
 import json
+import logging
 import os
+
+logger = logging.getLogger(__name__)
+
+
+from django.utils.safestring import mark_safe
+
+
+def _messages_json(qs):
+    """Serialize a ChatMessage queryset to a safe JSON string for embedding in HTML."""
+    data = [{'id': m.id, 'role': m.role, 'content': m.content} for m in qs]
+    # ensure_ascii=True so all unicode becomes \uXXXX escapes — no raw chars that
+    # Django's template engine could misinterpret as {{ }} or {% %} tags.
+    raw = json.dumps(data, ensure_ascii=True).replace('</', '<\\/')
+    return mark_safe(raw)
 
 from .models import ChatConversation, ChatMessage, UploadedFile, UserProfile, ContactMessage
 from .forms import ContactForm, FileUploadForm
 
 # Import AI models
 from .ai_models import generate_ai_response
+
+# Import RAG engine
+from . import rag_engine
 
 
 def home(request):
@@ -55,15 +73,16 @@ def chat_view(request):
             model_type=profile.preferred_model
         )
     
-    # Get messages for current conversation - FIXED: Use 'timestamp' instead of 'created_at'
+    # Get messages for current conversation
     messages_list = ChatMessage.objects.filter(conversation=current_conversation).order_by('timestamp')
-    
+
     context = {
         'user': user,
         'profile': profile,
         'conversations': conversations,
         'current_conversation': current_conversation,
         'messages': messages_list,
+        'messages_data': _messages_json(messages_list),
     }
     return render(request, 'chatbot/chat.html', context)
 
@@ -91,15 +110,15 @@ def chat_conversation(request, conversation_id):
     profile, created = UserProfile.objects.get_or_create(user=user)
     conversations = ChatConversation.objects.filter(user=user).order_by('-updated_at')
     
-    # FIXED: Use 'timestamp' instead of 'created_at'
     messages_list = ChatMessage.objects.filter(conversation=conversation).order_by('timestamp')
-    
+
     context = {
         'user': user,
         'profile': profile,
         'conversations': conversations,
         'current_conversation': conversation,
         'messages': messages_list,
+        'messages_data': _messages_json(messages_list),
     }
     return render(request, 'chatbot/chat.html', context)
 
@@ -159,7 +178,9 @@ def send_message(request):
             )
             
             # ============================================
-            # AI RESPONSE GENERATION WITH GOOGLE GEMINI
+            # AI RESPONSE GENERATION
+            #   Ayurvedic → Local Phi-3 + Ayurveda LoRA
+            #   Medicinal  → Google Gemini API
             # ============================================
             
             # Check if there are any uploaded files in this conversation
@@ -173,12 +194,31 @@ def send_message(request):
                 file_path = latest_file.file.path
                 file_type = latest_file.file_type
             
-            # Generate AI response using Google Gemini
+            # Build conversation history for multi-turn context
+            # (used by the local Phi-3 Ayurveda model; Gemini ignores it)
+            MAX_HISTORY_TURNS = 10  # keep last N user+assistant pairs
+            prior_messages = ChatMessage.objects.filter(
+                conversation=conversation
+            ).order_by('timestamp')
+
+            conversation_history = []
+            for msg in prior_messages:
+                if msg.role in ('user', 'assistant'):
+                    conversation_history.append({
+                        "role": msg.role,
+                        "content": msg.content,
+                    })
+            # Trim to last MAX_HISTORY_TURNS turns (each turn = 1 msg)
+            conversation_history = conversation_history[-MAX_HISTORY_TURNS:]
+
+            # Generate AI response (RAG-augmented when documents exist)
             response_text = generate_ai_response(
                 message=message_text,
                 model_type=model_type,
                 file_path=file_path,
-                file_type=file_type
+                file_type=file_type,
+                conversation_history=conversation_history,
+                conversation_id=conversation.id,
             )
             
             # ============================================
@@ -257,9 +297,26 @@ def upload_file(request):
                 file_type=uploaded_file.content_type,
                 original_name=uploaded_file.name
             )
-            
-            # File is now stored and will be processed when user asks questions
-            
+
+            # ── Phase 2: RAG Indexing ────────────────────────────────────────
+            # Extract text and index into ChromaDB for semantic retrieval.
+            # Wrapped in try/except so a RAG failure never blocks the upload.
+            try:
+                from .ai_models import process_uploaded_file
+                extracted_text = process_uploaded_file(
+                    file_obj.file.path,
+                    uploaded_file.content_type,
+                )
+                if extracted_text:
+                    rag_engine.index_document(extracted_text, conversation.id)
+                    logger.info(
+                        f"[RAG] Indexed document for conversation {conversation.id}: "
+                        f"{len(extracted_text)} chars → {uploaded_file.name}"
+                    )
+            except Exception as rag_err:
+                logger.error(f"[RAG] Indexing failed (non-fatal): {rag_err}")
+            # ── End RAG Indexing ─────────────────────────────────────────────
+
             return JsonResponse({
                 'status': 'success',
                 'message': f'File "{uploaded_file.name}" uploaded successfully! You can now ask questions about it.',
@@ -322,8 +379,23 @@ def switch_model(request):
 
 
 @login_required
+@csrf_exempt
 def delete_conversation(request, conversation_id):
-    """Delete a conversation"""
+    """Delete a conversation and its RAG vector store."""
+    if request.method == 'POST':
+        try:
+            conversation = get_object_or_404(ChatConversation, id=conversation_id, user=request.user)
+            # Clean up the RAG collection before deleting the conversation
+            try:
+                rag_engine.delete_collection(conversation_id)
+            except Exception as e:
+                logger.warning(f"[RAG] Could not delete collection on conversation delete: {e}")
+            conversation.delete()
+            return JsonResponse({'status': 'success', 'message': 'Chat deleted successfully'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+    
+    # Fallback for direct GET request (though UI uses POST)
     conversation = get_object_or_404(ChatConversation, id=conversation_id, user=request.user)
     conversation.delete()
     messages.success(request, 'Chat deleted successfully')

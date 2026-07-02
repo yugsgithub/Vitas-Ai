@@ -7,6 +7,307 @@
     <title>Chat - Vitas AI</title>
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- marked.js: converts Markdown asterisks/lists/headings to HTML -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        /* ── Assistant message markdown rendering ─────────────────── */
+
+        /* Widen assistant bubbles so long structured answers don't cluster */
+        .message.assistant {
+            max-width: 90%;
+        }
+
+        /* Headings: colour-coded left-border pill style */
+        .message.assistant .message-text h1,
+        .message.assistant .message-text h2,
+        .message.assistant .message-text h3 {
+            display: block;
+            font-size: 0.88rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            margin: 1.2rem 0 0.45rem;
+            padding: 0.35rem 0.75rem;
+            border-radius: 6px;
+            border-left: 4px solid;
+        }
+        .message.assistant .message-text h2 {
+            background: rgba(0,102,204,0.08);
+            border-color: #0066cc;
+            color: #0052a3;
+        }
+        .message.assistant .message-text h3 {
+            background: rgba(0,168,107,0.08);
+            border-color: #00a86b;
+            color: #007a4d;
+        }
+        /* First heading: no top margin */
+        .message.assistant .message-text h2:first-child,
+        .message.assistant .message-text h3:first-child { margin-top: 0.3rem; }
+
+        /* Paragraphs: comfortable breathing room */
+        .message.assistant .message-text p {
+            margin: 0.5rem 0;
+            line-height: 1.75;
+        }
+
+        /* Lists */
+        .message.assistant .message-text ul,
+        .message.assistant .message-text ol {
+            padding-left: 1.5rem;
+            margin: 0.4rem 0 0.6rem;
+        }
+        .message.assistant .message-text li {
+            margin-bottom: 0.35rem;
+            line-height: 1.65;
+        }
+
+        /* Bold inline terms */
+        .message.assistant .message-text strong {
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+
+        /* Horizontal dividers between sections */
+        .message.assistant .message-text hr {
+            border: none;
+            border-top: 1px solid rgba(0,0,0,0.10);
+            margin: 0.9rem 0;
+        }
+
+        /* Disclaimer / caution block at end */
+        .message.assistant .message-text p:last-child:has(strong) {
+            background: #fff8e1;
+            border-left: 3px solid #ffc107;
+            border-radius: 6px;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.88rem;
+            color: #5c4a00;
+        }
+
+        /* Code blocks (if any) */
+        .message.assistant .message-text code {
+            background: #f0f4f8;
+            border-radius: 4px;
+            padding: 0.1em 0.4em;
+            font-size: 0.88em;
+            font-family: 'Menlo', monospace;
+        }
+        .message.assistant .message-text pre {
+            background: #1a1d2e;
+            color: #e8eaf6;
+            border-radius: 8px;
+            padding: 1rem;
+            overflow-x: auto;
+            margin: 0.6rem 0;
+            font-size: 0.85rem;
+        }
+        .message.assistant .message-text pre code {
+            background: none;
+            color: inherit;
+            padding: 0;
+        }
+
+        /* Leading emoji prefix */
+        .msg-emoji-prefix {
+            display: inline-block;
+            margin-right: 0.3rem;
+            font-size: 1.1em;
+            vertical-align: middle;
+        }
+
+        /* ── Typing indicator dots ──────────────────────────────── */
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 6px 4px;
+        }
+        .typing-indicator span {
+            width: 8px; height: 8px;
+            background: currentColor;
+            border-radius: 50%;
+            animation: typingBounce 1.2s infinite;
+            opacity: 0.6;
+        }
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes typingBounce {
+            0%, 80%, 100% { transform: translateY(0); }
+            40%            { transform: translateY(-6px); }
+        }
+
+        /* ============================================
+           SEXY CHAT HISTORY DELETE BUTTON
+           ============================================ */
+        .history-item {
+            position: relative;
+            overflow: hidden; /* Ensure no overlap issues */
+        }
+
+        .delete-chat-btn {
+            position: absolute;
+            right: -40px; /* Hide off-screen initially */
+            top: 50%;
+            transform: translateY(-50%) scale(0.8);
+            
+            /* Beautiful circular styling */
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #ff4757, #ff6b81);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            
+            /* Flexbox to center icon perfectly */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            
+            cursor: pointer;
+            opacity: 0;
+            box-shadow: 0 4px 12px rgba(255, 71, 87, 0.3);
+            z-index: 10;
+            
+            /* Smooth entrance and hover transition */
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        .history-item:hover .delete-chat-btn {
+            opacity: 0.8;
+            right: 12px; /* Slide in smoothly */
+            transform: translateY(-50%) scale(1);
+        }
+
+        .delete-chat-btn:hover {
+            opacity: 1 !important;
+            background: linear-gradient(135deg, #e84118, #ff4757);
+            box-shadow: 0 6px 15px rgba(255, 71, 87, 0.5);
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .delete-chat-btn:active {
+            transform: translateY(-50%) scale(0.95);
+            box-shadow: 0 2px 6px rgba(255, 71, 87, 0.3);
+        }
+        /* ── Attachment Preview (Inside Input Area) ────────── */
+        .attachment-container {
+            display: none; /* Hidden by default */
+            padding: 10px;
+            background: #ffffff;
+            border-bottom: 1px solid #e9ecef;
+            border-radius: 12px 12px 0 0;
+        }
+        .attachment-card {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 8px 12px;
+            position: relative;
+            min-width: 200px;
+            max-width: 300px;
+        }
+        .attachment-icon {
+            width: 36px;
+            height: 36px;
+            background: #0084ff;
+            color: white;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+        .attachment-details {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .attachment-name {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #1e293b;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .attachment-type {
+            font-size: 0.7rem;
+            color: #64748b;
+        }
+        .attachment-remove {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            width: 20px;
+            height: 20px;
+            background: #475569;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            cursor: pointer;
+            border: 2px solid #ffffff;
+            transition: all 0.2s;
+        }
+        .attachment-remove:hover {
+            background: #1e293b;
+            transform: scale(1.1);
+        }
+
+        /* Adjust input wrapper to accommodate attachment */
+        .input-wrapper {
+            flex-direction: column;
+            align-items: stretch;
+            padding: 0;
+            overflow: hidden;
+        }
+        .input-controls {
+            display: flex;
+            align-items: flex-end;
+            gap: 0.75rem;
+            padding: 0.75rem;
+        }
+        /* ── File Card in Chat History (Compact like ChatGPT) ────────── */
+        .history-file-card {
+            background: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            padding: 6px 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+            font-size: 0.8rem;
+            color: #ffffff;
+            width: auto;
+            max-width: 100%;
+            transition: all 0.2s;
+        }
+        .message.assistant .history-file-card {
+            background: #f1f5f9;
+            border-color: #e2e8f0;
+            color: #475569;
+        }
+        .history-file-card i {
+            color: #0084ff;
+            font-size: 0.9rem;
+        }
+        .message-text {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .message.user .message-text {
+            align-items: flex-end;
+        }
+    </style>
 </head>
 <body class="chat-body">
     <div class="chat-container">
@@ -35,12 +336,15 @@
                            class="history-item {% if current_conversation.id == conversation.id %}active{% endif %}">
                             <div class="history-item-content">
                                 <i class="fas fa-comment-medical"></i>
-                                <span>{{ conversation.title|truncatechars:20 }}</span>
+                                <span>{{ conversation.title|truncatechars:18 }}</span>
                                 <span class="model-badge {% if conversation.model_type == 'medicinal' %}medicinal{% else %}ayurvedic{% endif %}">
                                     {% if conversation.model_type == 'medicinal' %}💊{% else %}🌿{% endif %}
                                 </span>
                             </div>
                             <div class="history-item-date">{{ conversation.created_at|date:"M d, Y" }}</div>
+                            <button type="button" class="delete-chat-btn" onclick="deleteChat(event, {{ conversation.id }})" title="Delete Chat">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
                         </a>
                         {% endfor %}
                     {% else %}
@@ -93,9 +397,12 @@
 
             <!-- Messages -->
             <div class="messages-container" id="messagesContainer">
+                {# Single JSON block for all messages — read by window.load handler #}
+                <script id="server-messages-data" type="application/json">{{ messages_data }}</script>
+
                 {% if messages %}
                     {% for msg in messages %}
-                    <div class="message {{ msg.role }}">
+                    <div class="message {{ msg.role }}" data-msg-id="{{ msg.id }}">
                         <div class="message-avatar">
                             {% if msg.role == 'user' %}
                                 <i class="fas fa-user"></i>
@@ -108,7 +415,7 @@
                                 <span class="message-sender">{% if msg.role == 'user' %}You{% else %}Vitas AI{% endif %}</span>
                                 <span class="message-time">{{ msg.timestamp|date:"h:i A" }}</span>
                             </div>
-                            <div class="message-text">{{ msg.content|linebreaks }}</div>
+                            <div class="message-text" data-role="{{ msg.role }}"></div>
                         </div>
                     </div>
                     {% endfor %}
@@ -118,13 +425,13 @@
                         <h2>Welcome to Vitas AI!</h2>
                         <p>How can I assist you with your health today?</p>
                         <div class="suggestions">
-                            <button class="suggestion-btn" onclick="sendSuggestion('What are the symptoms of diabetes?')">
+                            <button class="suggestion-btn" data-suggestion="What are the symptoms of diabetes?">
                                 What are the symptoms of diabetes?
                             </button>
-                            <button class="suggestion-btn" onclick="sendSuggestion('Natural remedies for headache')">
+                            <button class="suggestion-btn" data-suggestion="Natural remedies for headache">
                                 Natural remedies for headache
                             </button>
-                            <button class="suggestion-btn" onclick="sendSuggestion('How to improve immunity?')">
+                            <button class="suggestion-btn" data-suggestion="How to improve immunity?">
                                 How to improve immunity?
                             </button>
                         </div>
@@ -136,14 +443,32 @@
             <div class="chat-input-area">
                 <form id="chatForm">
                     <div class="input-wrapper">
-                        <button type="button" class="attach-btn" id="attachBtn">
-                            <i class="fas fa-paperclip"></i>
-                        </button>
-                        <input type="file" id="fileInput" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" style="display: none;">
-                        <textarea id="messageInput" placeholder="Type your message here..." rows="1" maxlength="5000"></textarea>
-                        <button type="submit" class="send-btn" id="sendBtn">
-                            <i class="fas fa-paper-plane"></i>
-                        </button>
+                        <!-- ATTACHMENT PREVIEW CONTAINER -->
+                        <div id="attachmentContainer" class="attachment-container">
+                            <div class="attachment-card">
+                                <div class="attachment-icon">
+                                    <i class="fas fa-file-alt"></i>
+                                </div>
+                                <div class="attachment-details">
+                                    <span id="attachmentName" class="attachment-name">filename.txt</span>
+                                    <span class="attachment-type">Document</span>
+                                </div>
+                                <div class="attachment-remove" onclick="removeAttachment()">
+                                    <i class="fas fa-times"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="input-controls">
+                            <button type="button" class="attach-btn" id="attachBtn" title="Attach Document">
+                                <i class="fas fa-paperclip"></i>
+                            </button>
+                            <input type="file" id="fileInput" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" style="display: none;">
+                            <textarea id="messageInput" placeholder="Type your message here..." rows="1" maxlength="5000"></textarea>
+                            <button type="submit" class="send-btn" id="sendBtn">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
                     </div>
                     <div class="input-info">
                         <span id="fileInfo" class="file-info"></span>
@@ -185,13 +510,13 @@
                     <h2>Welcome to Vitas AI!</h2>
                     <p>How can I assist you with your health today?</p>
                     <div class="suggestions">
-                        <button class="suggestion-btn" onclick="sendSuggestion('What are the symptoms of diabetes?')">
+                        <button class="suggestion-btn" data-suggestion="What are the symptoms of diabetes?">
                             What are the symptoms of diabetes?
                         </button>
-                        <button class="suggestion-btn" onclick="sendSuggestion('Natural remedies for headache')">
+                        <button class="suggestion-btn" data-suggestion="Natural remedies for headache">
                             Natural remedies for headache
                         </button>
-                        <button class="suggestion-btn" onclick="sendSuggestion('How to improve immunity?')">
+                        <button class="suggestion-btn" data-suggestion="How to improve immunity?">
                             How to improve immunity?
                         </button>
                     </div>
@@ -227,19 +552,33 @@
 
         document.getElementById('chatForm').addEventListener('submit', async function(e) {
             e.preventDefault();
-            const message = messageInput.value.trim();
-            if (!message) return;
+            const messageText = messageInput.value.trim();
+            if (!messageText) return;
 
             messageInput.disabled = true;
             document.getElementById('sendBtn').disabled = true;
-            addMessageToUI('user', message);
+
+            // Check for attached file
+            let attachedFileName = null;
+            const attachmentContainer = document.getElementById('attachmentContainer');
+            if (attachmentContainer.style.display === 'block') {
+                attachedFileName = document.getElementById('attachmentName').textContent;
+            }
+
+            addMessageToUI('user', messageText, false, attachedFileName);
             messageInput.value = '';
             messageInput.style.height = 'auto';
             document.getElementById('charCount').textContent = '0';
+            
+            // Clear attachment preview after sending
+            removeAttachment();
+
+            // Show typing indicator while waiting for model
+            const typingIndicator = addMessageToUI('assistant', '', true);
 
             try {
                 const requestBody = {
-                    message: message,
+                    message: messageText,
                     model_type: currentModelType
                 };
                 
@@ -258,6 +597,10 @@
                 });
 
                 const data = await response.json();
+                // Remove typing indicator
+                const typingEl = document.getElementById('typingIndicator');
+                if (typingEl) typingEl.remove();
+
                 if (data.status === 'success') {
                     // If this was a new chat, save the conversation ID
                     if (isNewChat || !conversationId) {
@@ -277,10 +620,14 @@
                     
                     addMessageToUI('assistant', data.assistant_message.content);
                 } else {
+                    const typingEl2 = document.getElementById('typingIndicator');
+                    if (typingEl2) typingEl2.remove();
                     alert('Error: ' + (data.message || 'Failed to send message'));
                     console.error('Server error:', data);
                 }
             } catch (error) {
+                const typingEl3 = document.getElementById('typingIndicator');
+                if (typingEl3) typingEl3.remove();
                 alert('Error sending message. Please try again.');
                 console.error('Send error:', error);
             }
@@ -290,15 +637,44 @@
             messageInput.focus();
         });
 
-        function addMessageToUI(role, content) {
+        function addMessageToUI(role, content, isTyping = false, attachedFile = null) {
             const messagesContainer = document.getElementById('messagesContainer');
             const welcomeMsg = document.querySelector('.welcome-message');
             if (welcomeMsg) welcomeMsg.remove();
 
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${role}`;
+            if (isTyping) messageDiv.id = 'typingIndicator';
+
             const time = new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-            
+
+            let renderedContent;
+            let attachmentHtml = '';
+
+            // If a file was attached to this message, create a mini card for the chat history
+            if (attachedFile) {
+                attachmentHtml = `
+                    <div class="history-file-card">
+                        <i class="fas fa-file-alt"></i>
+                        <span>${attachedFile}</span>
+                    </div>
+                `;
+            }
+
+            if (isTyping) {
+                renderedContent = `
+                    <div class="typing-indicator">
+                        <span></span><span></span><span></span>
+                    </div>`;
+            } else if (role === 'assistant') {
+                renderedContent = renderAssistantMarkdown(content);
+            } else {
+                // User messages: escape HTML, convert newlines to <br>
+                renderedContent = content
+                    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+                    .replace(/\n/g,'<br>');
+            }
+
             messageDiv.innerHTML = `
                 <div class="message-avatar">
                     <i class="fas fa-${role === 'user' ? 'user' : 'robot'}"></i>
@@ -308,18 +684,28 @@
                         <span class="message-sender">${role === 'user' ? 'You' : 'Vitas AI'}</span>
                         <span class="message-time">${time}</span>
                     </div>
-                    <div class="message-text">${content.replace(/\n/g, '<br>')}</div>
+                    <div class="message-text">
+                        ${attachmentHtml}
+                        ${renderedContent}
+                    </div>
                 </div>
             `;
-            
+
             messagesContainer.appendChild(messageDiv);
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            return messageDiv;
         }
 
-        function sendSuggestion(text) {
-            messageInput.value = text;
+        // Event delegation for suggestion buttons (works for both static
+        // and dynamically injected welcome screens — avoids inline onclick).
+        document.getElementById('messagesContainer').addEventListener('click', function(e) {
+            const btn = e.target.closest('.suggestion-btn[data-suggestion]');
+            if (!btn) return;
+            messageInput.value = btn.dataset.suggestion;
             document.getElementById('chatForm').dispatchEvent(new Event('submit'));
-        }
+        });
+
+
 
         document.getElementById('attachBtn').addEventListener('click', function() {
             document.getElementById('fileInput').click();
@@ -345,8 +731,21 @@
 
                 const data = await response.json();
                 if (data.status === 'success') {
+                    // CRITICAL FIX: If this was a new chat, the backend created a conversation for the file.
+                    // We MUST update the frontend state so the next message is sent to that same conversation.
+                    if (!conversationId && data.conversation_id) {
+                        conversationId = data.conversation_id;
+                        isNewChat = false;
+                        window.history.pushState({}, '', '/chat/' + conversationId + '/');
+                    }
+
+                    // Show the attachment preview card
+                    const container = document.getElementById('attachmentContainer');
+                    const nameSpan = document.getElementById('attachmentName');
+                    nameSpan.textContent = data.file_name;
+                    container.style.display = 'block';
+
                     document.getElementById('fileInfo').textContent = `✓ ${data.file_name}`;
-                    addMessageToUI('assistant', `File uploaded successfully.`);
                     setTimeout(() => {
                         document.getElementById('fileInfo').textContent = '';
                     }, 5000);
@@ -356,6 +755,11 @@
             }
             e.target.value = '';
         });
+
+        function removeAttachment() {
+            document.getElementById('attachmentContainer').style.display = 'none';
+            document.getElementById('fileInput').value = '';
+        }
 
         document.getElementById('modelSwitch').addEventListener('click', async function() {
             const newModel = currentModelType === 'medicinal' ? 'ayurvedic' : 'medicinal';
@@ -415,11 +819,121 @@
             }
         });
 
+        /* ── Shared markdown renderer ─────────────────────────────── */
+        function renderAssistantMarkdown(raw, modelType = currentModelType) {
+
+            // ── Step 1: Strip leading emoji (💊 / 🌿) ──────────────────
+            var emojiMatch = raw.match(/^([\u{1F300}-\u{1FFFF}\u{2600}-\u{26FF}]\uFE0F?|[\u{1F000}-\u{1F9FF}])\s*/u);
+            var emoji = emojiMatch ? emojiMatch[0].trim() : '';
+            var body  = emoji ? raw.slice(emojiMatch[0].length) : raw;
+
+            // ── Apply regex hacks ONLY for the local Ayurvedic model ──
+            if (modelType === 'ayurvedic') {
+                // ── Step 2: Repair LLM token-fragmented ## headings ─────────
+                body = body.replace(
+                    /^(##\s+\S[^\r\n]*)\r?\n([a-z]{1,5})\s*(?=\r?\n|$)/gm,
+                    '$1$2'
+                );
+
+                // ── Step 3: Repair bold headings broken across lines ─────────
+                body = body.replace(
+                    /(\*\*[A-Za-z ]{2,40})\r?\n([a-z]{1,5})(:\*\*)/gm,
+                    '$1$2$3'
+                );
+
+                // ── Step 4: Convert bold-section labels → ## headings ────────
+                body = body.replace(/^\*\*([A-Z][A-Za-z &()]{2,40}):\*\*/gm, '\n## $1\n');
+                body = body.replace(/^\*\*([A-Z][A-Za-z &()]{2,40})\*\*/gm,  '\n## $1\n');
+
+                // ── Step 5: Normalise "---" dividers → proper <hr> ──────────
+                body = body.replace(/^---+$/gm, '\n---\n');
+
+                // ── Step 6: Ensure blank line after each heading ─────────────
+                body = body.replace(/(^#{1,3} .+)(?!\r?\n\r?\n)/gm, '$1\n');
+            } else {
+                // For the Groq API (Medicinal), we just want to ensure bold sections are rendered as headings
+                // because Groq outputs **Heading** instead of ## Heading, but we don't want the aggressive chopping.
+                body = body.replace(/^\*\*([^\*]{2,100})\*\*:?/gm, '\n## $1\n');
+            }
+
+            // ── Step 7: Render markdown → HTML ───────────────────────────
+            var html = marked.parse(body.trim());
+
+            // ── Step 8: Prepend emoji as styled span ─────────────────────
+            if (emoji) {
+                html = '<span class="msg-emoji-prefix">' + emoji + '</span>' + html;
+            }
+            return html;
+        }
+
         window.addEventListener('load', function() {
-            const container = document.getElementById('messagesContainer');
+            // Parse the single JSON block injected by the view (messages_data context var)
+            var serverMsgs = {};
+            try {
+                var block = document.getElementById('server-messages-data');
+                if (block) {
+                    JSON.parse(block.textContent).forEach(function(m) {
+                        serverMsgs[String(m.id)] = { role: m.role, content: m.content };
+                    });
+                }
+            } catch(e) { console.error('Message data parse error:', e); }
+
+            // Render each server-loaded message bubble
+            document.querySelectorAll('.message[data-msg-id]').forEach(function(msgDiv) {
+                var msgId  = msgDiv.getAttribute('data-msg-id');
+                var textEl = msgDiv.querySelector('.message-text');
+                if (!textEl || !serverMsgs[msgId]) return;
+
+                var raw  = serverMsgs[msgId].content || '';
+                var role = serverMsgs[msgId].role    || 'user';
+
+                if (role === 'assistant') {
+                    textEl.innerHTML = renderAssistantMarkdown(raw);
+                } else {
+                    textEl.textContent = raw;
+                }
+            });
+
+            var container = document.getElementById('messagesContainer');
             container.scrollTop = container.scrollHeight;
             messageInput.focus();
         });
+
+        // ── Delete Chat Logic ──────────────────────────────────────────
+        async function deleteChat(event, chatId) {
+            event.preventDefault();     // Prevent link click
+            event.stopPropagation();    // Prevent bubbling
+
+            if (!confirm("Are you sure you want to delete this chat history? This cannot be undone.")) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/chat/delete/${chatId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrftoken,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+                if (data.status === 'success') {
+                    // If the deleted chat is currently open, redirect to new chat
+                    if (conversationId == chatId) {
+                        window.location.href = '/chat/';
+                    } else {
+                        // Otherwise just remove the element from the DOM
+                        event.target.closest('.history-item').remove();
+                    }
+                } else {
+                    alert('Error deleting chat: ' + data.message);
+                }
+            } catch (error) {
+                console.error("Delete failed:", error);
+                alert("Failed to delete chat due to a network error.");
+            }
+        }
     </script>
 </body>
 </html>
