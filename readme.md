@@ -145,7 +145,7 @@ Both models are in **Q4_K_M GGUF format** and are downloaded automatically on fi
 ### 1. Clone & Install
 
 ```bash
-git clone https://github.com/NeelPatel06/Vitas_ai.git
+git clone https://github.com/yugsgithub/Vitas-Ai.git
 cd Vitas_ai
 pip install -r requirements.txt
 pip install llama-cpp-python  # for local model inference
